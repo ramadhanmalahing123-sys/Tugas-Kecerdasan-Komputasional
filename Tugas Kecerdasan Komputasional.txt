@@ -1,0 +1,361 @@
+"""
+╔══════════════════════════════════════════════════════════════╗
+║       SISTEM PRESENSI MAHASISWA - DECISION TREE SEDERHANA    ║
+║               Menggunakan Logika IF-ELSE                     ║
+╚══════════════════════════════════════════════════════════════╝
+"""
+
+import os
+import time
+import datetime
+
+# ─── KODE WARNA ANSI ───────────────────────────────────────────
+RESET   = "\033[0m"
+BOLD    = "\033[1m"
+DIM     = "\033[2m"
+
+# Warna teks
+MERAH   = "\033[91m"
+HIJAU   = "\033[92m"
+KUNING  = "\033[93m"
+BIRU    = "\033[94m"
+MAGENTA = "\033[95m"
+CYAN    = "\033[96m"
+PUTIH   = "\033[97m"
+ORANYE  = "\033[38;5;214m"
+
+# Background
+BG_BIRU  = "\033[44m"
+BG_HIJAU = "\033[42m"
+BG_MERAH = "\033[41m"
+BG_ABU   = "\033[100m"
+
+
+# ═══════════════════════════════════════════════════════════════
+#  DATA MAHASISWA (menggunakan array / list of dict)
+# ═══════════════════════════════════════════════════════════════
+data_mahasiswa = [
+    {"nim": "2021001", "nama": "Andi",   "kehadiran": "Tinggi", "tugas": "Lengkap"},
+    {"nim": "2021002", "nama": "Budi",   "kehadiran": "Rendah", "tugas": "Tidak Lengkap"},
+    {"nim": "2021003", "nama": "Citra",  "kehadiran": "Tinggi", "tugas": "Tidak Lengkap"},
+    {"nim": "2021004", "nama": "Deni",   "kehadiran": "Rendah", "tugas": "Lengkap"},
+    # ── Data mahasiswa baru (fitur tambahan: 2 mahasiswa baru) ──
+    {"nim": "2021005", "nama": "Eva",    "kehadiran": "Tinggi", "tugas": "Lengkap"},
+    {"nim": "2021006", "nama": "Fajar",  "kehadiran": "Rendah", "tugas": "Tidak Lengkap"},
+]
+
+# ─── Riwayat log sesi ──────────────────────────────────────────
+riwayat_log = []
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FUNGSI DECISION TREE (IF-ELSE)
+# ═══════════════════════════════════════════════════════════════
+def tentukan_status(kehadiran, tugas):
+    """
+    Decision Tree sederhana:
+      Kehadiran Tinggi → Aktif
+        └─ Tugas Lengkap   → "Mahasiswa Disiplin"
+        └─ Tugas Tdk Lengkap → "Perlu Tingkatkan Tugas"
+      Kehadiran Rendah → Tidak Aktif
+        └─ Tugas Lengkap   → "Rajin Tugas, Kurang Hadir"
+        └─ Tugas Tdk Lengkap → "Perlu Perhatian Khusus"
+    """
+    if kehadiran == "Tinggi":
+        status = "Aktif"
+        if tugas == "Lengkap":
+            keterangan = "Mahasiswa Disiplin ★"
+            skor = 100
+        else:
+            keterangan = "Perlu Tingkatkan Tugas"
+            skor = 70
+    else:  # Rendah
+        status = "Tidak Aktif"
+        if tugas == "Lengkap":
+            keterangan = "Rajin Tugas, Kurang Hadir"
+            skor = 50
+        else:
+            keterangan = "Perlu Perhatian Khusus ⚠"
+            skor = 20
+
+    return status, keterangan, skor
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FUNGSI TAMPILAN
+# ═══════════════════════════════════════════════════════════════
+def bersihkan_layar():
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def cetak_header():
+    lebar = 68
+    print()
+    print(f"{CYAN}{'═' * lebar}{RESET}")
+    print(f"{CYAN}║{RESET}{BOLD}{BG_ABU}{'SISTEM PRESENSI MAHASISWA — DECISION TREE':^66}{RESET}{CYAN}║{RESET}")
+    print(f"{CYAN}║{RESET}{DIM}{'Teknik Informatika | Tahun Akademik 2024/2025':^66}{RESET}{CYAN}║{RESET}")
+    print(f"{CYAN}{'═' * lebar}{RESET}")
+    tanggal = datetime.datetime.now().strftime("%d %B %Y  %H:%M:%S")
+    print(f"{DIM}  Waktu Akses : {tanggal}{RESET}")
+    print()
+
+
+def warna_status(status):
+    if status == "Aktif":
+        return f"{BOLD}{HIJAU}{status}{RESET}"
+    return f"{BOLD}{MERAH}{status}{RESET}"
+
+
+def warna_kehadiran(kehadiran):
+    if kehadiran == "Tinggi":
+        return f"{HIJAU}{kehadiran}{RESET}"
+    return f"{KUNING}{kehadiran}{RESET}"
+
+
+def warna_tugas(tugas):
+    if tugas == "Lengkap":
+        return f"{HIJAU}{tugas}{RESET}"
+    return f"{ORANYE}{tugas}{RESET}"
+
+
+def warna_keterangan(ket):
+    if "Disiplin" in ket:
+        return f"{BOLD}{CYAN}{ket}{RESET}"
+    elif "Perhatian" in ket:
+        return f"{BOLD}{MERAH}{ket}{RESET}"
+    elif "Rajin" in ket:
+        return f"{KUNING}{ket}{RESET}"
+    return f"{DIM}{ket}{RESET}"
+
+
+def cetak_garis_tabel():
+    print(f"{BIRU}  ├{'─'*6}┼{'─'*12}┼{'─'*12}┼{'─'*18}┼{'─'*14}┼{'─'*7}┼{'─'*26}┤{RESET}")
+
+
+def cetak_tabel(data):
+    # Header tabel
+    print(f"{BIRU}  ┌{'─'*6}┬{'─'*12}┬{'─'*12}┬{'─'*18}┬{'─'*14}┬{'─'*7}┬{'─'*26}┐{RESET}")
+    print(f"{BIRU}  │{RESET}{BOLD}{'NIM':^6}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'NAMA':^12}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'KEHADIRAN':^12}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'TUGAS':^18}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'STATUS':^14}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'SKOR':^7}{RESET}{BIRU}│{RESET}"
+          f"{BOLD}{'KETERANGAN':^26}{RESET}{BIRU}│{RESET}")
+    print(f"{BIRU}  ├{'═'*6}┼{'═'*12}┼{'═'*12}┼{'═'*18}┼{'═'*14}┼{'═'*7}┼{'═'*26}┤{RESET}")
+
+    for mhs in data:
+        status, keterangan, skor = tentukan_status(mhs["kehadiran"], mhs["tugas"])
+
+        # Simpan ke riwayat
+        riwayat_log.append({
+            "nim": mhs["nim"],
+            "nama": mhs["nama"],
+            "status": status,
+            "skor": skor
+        })
+
+        nim_str     = mhs["nim"]
+        nama_str    = mhs["nama"]
+        had_str     = mhs["kehadiran"]
+        tugas_str   = mhs["tugas"]
+
+        # Padding manual (tanpa warna memengaruhi lebar)
+        nim_pad   = nim_str.center(6)
+        nama_pad  = nama_str.center(12)
+        had_pad   = had_str.center(12)
+        tugas_pad = tugas_str.center(18)
+        stat_pad  = status.center(14)
+        skor_pad  = str(skor).center(7)
+        ket_pad   = keterangan.ljust(26)
+
+        print(f"{BIRU}  │{RESET}{nim_pad}{BIRU}│{RESET}"
+              f"{MAGENTA}{nama_pad}{RESET}{BIRU}│{RESET}"
+              f"{warna_kehadiran(had_str):}{' ' * (12 - len(had_str))}{BIRU}│{RESET}"
+              f"{warna_tugas(tugas_str):}{' ' * (18 - len(tugas_str))}{BIRU}│{RESET}"
+              f"{warna_status(status):}{' ' * (14 - len(status))}{BIRU}│{RESET}"
+              f"{PUTIH}{skor_pad}{RESET}{BIRU}│{RESET}"
+              f"{warna_keterangan(keterangan):} {BIRU}│{RESET}")
+
+        cetak_garis_tabel()
+
+    print(f"{BIRU}  └{'─'*6}┴{'─'*12}┴{'─'*12}┴{'─'*18}┴{'─'*14}┴{'─'*7}┴{'─'*26}┘{RESET}")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FITUR TAMBAHAN 1 : RINGKASAN STATISTIK
+# ═══════════════════════════════════════════════════════════════
+def tampilkan_statistik(data):
+    total      = len(data)
+    aktif      = sum(1 for m in data if tentukan_status(m["kehadiran"], m["tugas"])[0] == "Aktif")
+    tidak_aktif = total - aktif
+    disiplin   = sum(1 for m in data if "Disiplin" in tentukan_status(m["kehadiran"], m["tugas"])[1])
+    perhatian  = sum(1 for m in data if "Perhatian" in tentukan_status(m["kehadiran"], m["tugas"])[1])
+
+    rata_skor  = sum(tentukan_status(m["kehadiran"], m["tugas"])[2] for m in data) / total
+
+    print(f"\n{BOLD}{CYAN}  📊  RINGKASAN STATISTIK KELAS{RESET}")
+    print(f"  {'─'*40}")
+    print(f"  Total Mahasiswa    : {BOLD}{PUTIH}{total}{RESET} orang")
+    print(f"  Status Aktif       : {BOLD}{HIJAU}{aktif}{RESET} mahasiswa")
+    print(f"  Status Tidak Aktif : {BOLD}{MERAH}{tidak_aktif}{RESET} mahasiswa")
+    print(f"  Mahasiswa Disiplin : {BOLD}{CYAN}{disiplin}{RESET} mahasiswa ★")
+    print(f"  Butuh Perhatian    : {BOLD}{ORANYE}{perhatian}{RESET} mahasiswa ⚠")
+    print(f"  Rata-rata Skor     : {BOLD}{KUNING}{rata_skor:.1f}{RESET} / 100")
+
+    # Bar chart sederhana
+    print(f"\n  {DIM}Distribusi Status:{RESET}")
+    bar_aktif   = "█" * aktif
+    bar_tidak   = "█" * tidak_aktif
+    print(f"  Aktif       {HIJAU}{bar_aktif:<20}{RESET} {aktif} mahasiswa")
+    print(f"  Tidak Aktif {MERAH}{bar_tidak:<20}{RESET} {tidak_aktif} mahasiswa")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FITUR TAMBAHAN 2 : CARI MAHASISWA BERDASARKAN NAMA
+# ═══════════════════════════════════════════════════════════════
+def cari_mahasiswa(data):
+    print(f"\n{BOLD}{MAGENTA}  🔍  PENCARIAN MAHASISWA{RESET}")
+    print(f"  {'─'*40}")
+    keyword = input(f"  Masukkan nama mahasiswa : ").strip().lower()
+
+    hasil = [m for m in data if keyword in m["nama"].lower()]
+
+    if not hasil:
+        print(f"  {MERAH}Mahasiswa dengan nama '{keyword}' tidak ditemukan.{RESET}")
+        return
+
+    for mhs in hasil:
+        status, keterangan, skor = tentukan_status(mhs["kehadiran"], mhs["tugas"])
+        print(f"\n  {BG_ABU}{'─'*42}{RESET}")
+        print(f"  {BOLD}NIM        :{RESET} {mhs['nim']}")
+        print(f"  {BOLD}Nama       :{RESET} {MAGENTA}{mhs['nama']}{RESET}")
+        print(f"  {BOLD}Kehadiran  :{RESET} {warna_kehadiran(mhs['kehadiran'])}")
+        print(f"  {BOLD}Tugas      :{RESET} {warna_tugas(mhs['tugas'])}")
+        print(f"  {BOLD}Status     :{RESET} {warna_status(status)}")
+        print(f"  {BOLD}Skor       :{RESET} {KUNING}{skor}{RESET} / 100")
+        print(f"  {BOLD}Keterangan :{RESET} {warna_keterangan(keterangan)}")
+    print(f"  {BG_ABU}{'─'*42}{RESET}")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FITUR TAMBAHAN 3 : TAMBAH MAHASISWA BARU (SESI INI)
+# ═══════════════════════════════════════════════════════════════
+def tambah_mahasiswa(data):
+    print(f"\n{BOLD}{HIJAU}  ➕  TAMBAH MAHASISWA BARU{RESET}")
+    print(f"  {'─'*40}")
+
+    nim  = input(f"  NIM Mahasiswa     : ").strip()
+    nama = input(f"  Nama Mahasiswa    : ").strip()
+
+    print(f"  Kehadiran  [1] Tinggi  [2] Rendah : ", end="")
+    pilih_had = input().strip()
+    kehadiran = "Tinggi" if pilih_had == "1" else "Rendah"
+
+    print(f"  Tugas      [1] Lengkap [2] Tidak Lengkap : ", end="")
+    pilih_tugas = input().strip()
+    tugas = "Lengkap" if pilih_tugas == "1" else "Tidak Lengkap"
+
+    mhs_baru = {"nim": nim, "nama": nama, "kehadiran": kehadiran, "tugas": tugas}
+    data.append(mhs_baru)
+
+    status, keterangan, skor = tentukan_status(kehadiran, tugas)
+    print(f"\n  {HIJAU}✔ Mahasiswa {BOLD}{nama}{RESET}{HIJAU} berhasil ditambahkan!{RESET}")
+    print(f"  Status     : {warna_status(status)}")
+    print(f"  Keterangan : {warna_keterangan(keterangan)}")
+    print(f"  Skor       : {KUNING}{skor}{RESET} / 100")
+
+
+# ═══════════════════════════════════════════════════════════════
+#  MENU UTAMA
+# ═══════════════════════════════════════════════════════════════
+def tampilkan_menu():
+    print(f"\n{BOLD}  📋  MENU UTAMA{RESET}")
+    print(f"  {'─'*40}")
+    print(f"  {CYAN}[1]{RESET} Tampilkan Semua Data Mahasiswa")
+    print(f"  {CYAN}[2]{RESET} Statistik Kelas")
+    print(f"  {CYAN}[3]{RESET} Cari Mahasiswa")
+    print(f"  {CYAN}[4]{RESET} Tambah Mahasiswa Baru")
+    print(f"  {CYAN}[5]{RESET} Tampilkan Pohon Keputusan (Decision Tree)")
+    print(f"  {MERAH}[0]{RESET} Keluar")
+    print(f"  {'─'*40}")
+    pilihan = input(f"  Pilih menu : ").strip()
+    return pilihan
+
+
+# ═══════════════════════════════════════════════════════════════
+#  FITUR VISUALISASI DECISION TREE DI TERMINAL
+# ═══════════════════════════════════════════════════════════════
+def tampilkan_decision_tree():
+    print(f"\n{BOLD}{KUNING}  🌳  VISUALISASI DECISION TREE{RESET}")
+    print(f"""
+  {BOLD}ROOT: Kehadiran?{RESET}
+       │
+       ├─── {HIJAU}[Tinggi]{RESET} ──→  Status: {BOLD}{HIJAU}AKTIF{RESET}
+       │         │
+       │         ├─── {CYAN}[Tugas Lengkap]{RESET}       → ★ {BOLD}{CYAN}Mahasiswa Disiplin{RESET}   (Skor: 100)
+       │         └─── {ORANYE}[Tugas Tdk Lengkap]{RESET} → ⚙ {BOLD}Perlu Tingkatkan Tugas{RESET} (Skor: 70)
+       │
+       └─── {MERAH}[Rendah]{RESET} ──→  Status: {BOLD}{MERAH}TIDAK AKTIF{RESET}
+                 │
+                 ├─── {KUNING}[Tugas Lengkap]{RESET}       → ⚡ {BOLD}Rajin Tugas, Kurang Hadir{RESET} (Skor: 50)
+                 └─── {MERAH}[Tugas Tdk Lengkap]{RESET} → ⚠ {BOLD}{MERAH}Perlu Perhatian Khusus{RESET}  (Skor: 20)
+    """)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  MAIN PROGRAM
+# ═══════════════════════════════════════════════════════════════
+def main():
+    data = data_mahasiswa.copy()
+
+    while True:
+        bersihkan_layar()
+        cetak_header()
+        pilihan = tampilkan_menu()
+
+        if pilihan == "1":
+            bersihkan_layar()
+            cetak_header()
+            print(f"\n{BOLD}  📚  DATA SELURUH MAHASISWA{RESET}\n")
+            riwayat_log.clear()
+            cetak_tabel(data)
+            input(f"\n  {DIM}Tekan Enter untuk kembali...{RESET}")
+
+        elif pilihan == "2":
+            bersihkan_layar()
+            cetak_header()
+            tampilkan_statistik(data)
+            input(f"\n  {DIM}Tekan Enter untuk kembali...{RESET}")
+
+        elif pilihan == "3":
+            bersihkan_layar()
+            cetak_header()
+            cari_mahasiswa(data)
+            input(f"\n  {DIM}Tekan Enter untuk kembali...{RESET}")
+
+        elif pilihan == "4":
+            bersihkan_layar()
+            cetak_header()
+            tambah_mahasiswa(data)
+            input(f"\n  {DIM}Tekan Enter untuk kembali...{RESET}")
+
+        elif pilihan == "5":
+            bersihkan_layar()
+            cetak_header()
+            tampilkan_decision_tree()
+            input(f"\n  {DIM}Tekan Enter untuk kembali...{RESET}")
+
+        elif pilihan == "0":
+            bersihkan_layar()
+            print(f"\n  {CYAN}Terima kasih telah menggunakan Sistem Presensi Mahasiswa!{RESET}")
+            print(f"  {DIM}Program selesai. Sampai jumpa! 👋{RESET}\n")
+            break
+
+        else:
+            print(f"\n  {MERAH}Pilihan tidak valid. Coba lagi.{RESET}")
+            time.sleep(1)
+
+
+if __name__ == "__main__":
+    main()
